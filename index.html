@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconhecimento de Texto por Câmera</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+        
+        @media (min-width: 768px) {
+            .main-content {
+                flex-direction: row;
+            }
+        }
+        
+        .camera-section {
+            flex: 1;
+            margin-right: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .text-section {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0,0,0,0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .text-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .text-header h2 {
+            font-size: 1.8rem;
+            color: #1e293b;
+        }
+        
+        .counter {
+            background: #4f46e5;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        #textList {
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .text-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 10px;
+            border-left: 5px solid #4f46e5;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .text-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .text-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        .text-item-content {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: #1e293b;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #64748b;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .instructions {
+            background: #f0f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 5px solid #0ea5e9;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #0369a1;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            color: #475569;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 30px;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Scrollbar personalizada */
+        #textList::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #textList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        #textList::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        #textList::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        /* Loader */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-camera"></i> Scanner de Texto por Câmera</h1>
+            <p class="subtitle">Aponte para qualquer texto e ele será capturado automaticamente</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="camera-section">
+                <div class="status status-inactive" id="status">
+                    <i class="fas fa-video-slash"></i> Câmera desativada
+                </div>
+                
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                    <div class="video-overlay" id="overlay">
+                        <div style="text-align: center;">
+                            <i class="fas fa-camera" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                            <p>Clique em "Ativar Câmera" para começar</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn">
+                        <i class="fas fa-video"></i> Ativar Câmera
+                    </button>
+                    <button class="btn btn-secondary" id="pauseBtn" disabled>
+                        <i class="fas fa-pause"></i> Pausar
+                    </button>
+                    <button class="btn btn-danger" id="clearBtn">
+                        <i class="fas fa-trash"></i> Limpar Lista
+                    </button>
+                    <button class="btn btn-success" id="exportBtn">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-info-circle"></i> Como usar:</h3>
+                    <ol>
+                        <li>Clique em "Ativar Câmera" e permita o acesso à câmera</li>
+                        <li>Aponte a câmera para qualquer texto (livro, tela, etc.)</li>
+                        <li>O texto será detectado automaticamente e adicionado à lista</li>
+                        <li>Use "Pausar" para parar a detecção temporariamente</li>
+                        <li>Clique em "Exportar" para baixar todos os textos</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="text-section">
+                <div class="text-header">
+                    <h2><i class="fas fa-list"></i> Textos Detectados</h2>
+                    <div class="counter" id="counter">0 itens</div>
+                </div>
+                
+                <div id="textList">
+                    <div class="empty-state">
+                        <i class="fas fa-font"></i>
+                        <h3>Nenhum texto detectado ainda</h3>
+                        <p>Ative a câmera e aponte para algum texto</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Feito com <i class="fas fa-heart" style="color: #ef4444;"></i> | Funciona 100% no navegador - nenhum dado é enviado para servidores</p>
+            <p style="margin-top: 5px; font-size: 0.8rem;">Compatível com Samsung Galaxy e outros dispositivos</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/tesseract.min.js"></script>
+    <script>
+        // Elementos do DOM
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const textList = document.getElementById('textList');
+        const counter = document.getElementById('counter');
+        const statusDiv = document.getElementById('status');
+        
+        // Variáveis globais
+        let stream = null;
+        let isScanning = false;
+        let isPaused = false;
+        let detectedTexts = [];
+        let scanInterval = null;
+        let worker = null;
+        
+        // Inicializar Tesseract.js
+        async function initializeTesseract() {
+            try {
+                console.log("Inicializando Tesseract...");
+                worker = await Tesseract.createWorker('por');
+                await worker.load();
+                await worker.loadLanguage('por');
+                await worker.initialize('por');
+                console.log("Tesseract inicializado com sucesso!");
+            } catch (error) {
+                console.error("Erro ao inicializar Tesseract:", error);
+                alert("Não foi possível carregar o reconhecedor de texto. Tente recarregar a página.");
+            }
+        }
+        
+        // Iniciar câmera
+        async function startCamera() {
+            try {
+                // Solicitar permissão da câmera
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment', // Usar câmera traseira
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                });
+                
+                // Conectar stream ao elemento de vídeo
+                video.srcObject = stream;
+                overlay.style.display = 'none';
+                
+                // Atualizar status
+                statusDiv.className = 'status status-active';
+                statusDiv.innerHTML = '<i class="fas fa-video"></i> Câmera ativa - Detectando texto...';
+                
+                // Atualizar botões
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-video"></i> Câmera Ativa';
+                
+                // Iniciar detecção
+                startTextDetection();
+                
+            } catch (error) {
+                console.error("Erro ao acessar câmera:", error);
+                alert("Não foi possível acessar a câmera. Verifique as permissões.");
+                
+                statusDiv.className = 'status status-inactive';
+                statusDiv.innerHTML = '<i class="fas fa-video-slash"></i> Erro ao acessar câmera';
+            }
+        }
+        
+        // Parar câmera
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+            
+            overlay.style.display = 'flex';
+            isScanning = false;
+            isPaused = false;
+            
+            statusDiv.className = 'status status-inactive';
+            statusDiv.innerHTML = '<i class="fas fa-video-slash"></i> Câmera desativada';
+            
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-video"></i> Ativar Câmera';
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+        }
+        
+        // Iniciar detecção de texto
+        function startTextDetection() {
+            if (isScanning) return;
+            
+            isScanning = true;
+            isPaused = false;
+            
+            // Detectar texto a cada 3 segundos
+            scanInterval = setInterval(async () => {
+                if (isPaused || !worker) return;
+                
+                try {
+                    // Capturar frame do vídeo
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Processar imagem com Tesseract
+                    const { data: { text } } = await worker.recognize(canvas);
+                    
+                    // Verificar se há texto
+                    const cleanText = text.trim();
+                    if (cleanText && cleanText.length > 3) {
+                        // Verificar se é texto duplicado (similar)
+                        if (!isDuplicateText(cleanText)) {
+                            addDetectedText(cleanText);
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error("Erro na detecção:", error);
+                }
+            }, 3000); // Verificar a cada 3 segundos
+        }
+        
+        // Verificar se o texto é duplicado
+        function isDuplicateText(newText) {
+            // Converter para minúsculas e remover espaços extras
+            const normalizedNew = newText.toLowerCase().replace(/\s+/g, ' ').trim();
+            
+            // Verificar similaridade com textos existentes
+            for (const item of detectedTexts) {
+                const normalizedExisting = item.text.toLowerCase().replace(/\s+/g, ' ').trim();
+                
+                // Se for muito similar (90% igual), considerar duplicado
+                if (calculateSimilarity(normalizedNew, normalizedExisting) > 0.9) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Calcular similaridade entre strings
+        function calculateSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+            
+            // Se uma string for muito maior que a outra
+            if (longer.length === 0) return 1.0;
+            
+            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
+        }
+        
+        // Distância de edição (Levenshtein)
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+            
+            const costs = [];
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else if (j > 0) {
+                        let newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return costs[s2.length];
+        }
+        
+        // Adicionar texto detectado à lista
+        function addDetectedText(text) {
+            const timestamp = new Date().toLocaleTimeString();
+            const date = new Date().toLocaleDateString();
+            
+            // Adicionar ao array
+            detectedTexts.unshift({
+                text: text,
+                timestamp: timestamp,
+                date: date,
+                id: Date.now()
+            });
+            
+            // Atualizar a interface
+            updateTextList();
+            updateCounter();
+            
+            // Feedback visual
+            startBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            setTimeout(() => {
+                startBtn.style.background = 'linear-gradient(135deg, #4f46e5, #7c3aed)';
+            }, 300);
+        }
+        
+        // Atualizar lista de textos na interface
+        function updateTextList() {
+            if (detectedTexts.length === 0) {
+                textList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-font"></i>
+                        <h3>Nenhum texto detectado ainda</h3>
+                        <p>Ative a câmera e aponte para algum texto</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            detectedTexts.forEach(item => {
+                html += `
+                    <div class="text-item">
+                        <div class="text-item-header">
+                            <span><i class="far fa-clock"></i> ${item.timestamp}</span>
+                            <span><i class="far fa-calendar"></i> ${item.date}</span>
+                        </div>
+                        <div class="text-item-content">${item.text}</div>
+                    </div>
+                `;
+            });
+            
+            textList.innerHTML = html;
+        }
+        
+        // Atualizar contador
+        function updateCounter() {
+            counter.textContent = `${detectedTexts.length} ${detectedTexts.length === 1 ? 'item' : 'itens'}`;
+        }
+        
+        // Limpar lista
+        function clearList() {
+            if (detectedTexts.length === 0) return;
+            
+            if (confirm(`Tem certeza que deseja limpar todos os ${detectedTexts.length} textos?`)) {
+                detectedTexts = [];
+                updateTextList();
+                updateCounter();
+            }
+        }
+        
+        // Exportar textos
+        function exportTexts() {
+            if (detectedTexts.length === 0) {
+                alert('Nenhum texto para exportar!');
+                return;
+            }
+            
+            let exportContent = 'TEXTOS DETECTADOS - SCANNER DE CÂMERA\n';
+            exportContent += '='.repeat(50) + '\n\n';
+            
+            detectedTexts.forEach((item, index) => {
+                exportContent += `TEXTO ${index + 1}\n`;
+                exportContent += `Data: ${item.date} | Hora: ${item.timestamp}\n`;
+                exportContent += '-'.repeat(30) + '\n';
+                exportContent += item.text + '\n\n';
+            });
+            
+            // Criar arquivo para download
+            const blob = new Blob([exportContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `textos-detectados-${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Event Listeners
+        startBtn.addEventListener('click', startCamera);
+        
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                pauseBtn.innerHTML = '<i class="fas fa-play"></i> Continuar';
+                statusDiv.innerHTML = '<i class="fas fa-pause"></i> Detecção pausada';
+            } else {
+                pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+                statusDiv.innerHTML = '<i class="fas fa-video"></i> Câmera ativa - Detectando texto...';
+            }
+        });
+        
+        clearBtn.addEventListener('click', clearList);
+        exportBtn.addEventListener('click', exportTexts);
+        
+        // Inicializar quando a página carregar
+        window.addEventListener('load', async () => {
+            console.log("Página carregada, inicializando...");
+            await initializeTesseract();
+            updateCounter();
+        });
+        
+        // Parar câmera quando a página for fechada
+        window.addEventListener('beforeunload', () => {
+            if (worker) {
+                worker.terminate();
+            }
+            stopCamera();
+        });
+    </script>
+</body>
+</html>
