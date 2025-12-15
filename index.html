@@ -2,306 +2,470 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reconhecimento de Texto por Câmera</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanner de Texto - Celular</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
-            color: #333;
+            padding: 0;
+            color: var(--dark);
+            overflow-x: hidden;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        
-        header {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        /* Header fixo */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            padding: 25px 30px;
+            padding: 18px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            height: 70px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .counter-badge {
+            background: var(--success);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-width: 70px;
             text-align: center;
         }
         
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
+        /* Conteúdo principal */
+        .main-container {
+            margin-top: 70px;
+            padding: 15px;
+            padding-bottom: 100px; /* Espaço para os botões flutuantes */
         }
         
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-        
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            padding: 30px;
-        }
-        
-        @media (min-width: 768px) {
-            .main-content {
-                flex-direction: row;
-            }
-        }
-        
-        .camera-section {
-            flex: 1;
-            margin-right: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .text-section {
-            flex: 1;
-            background: #f8fafc;
+        /* Status */
+        .status-card {
+            background: var(--card-bg);
             border-radius: 15px;
-            padding: 25px;
-            border: 2px dashed #cbd5e1;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 5px solid var(--gray);
         }
         
-        .video-container {
+        .status-card.active {
+            border-left-color: var(--success);
+        }
+        
+        .status-card.error {
+            border-left-color: var(--danger);
+        }
+        
+        .status-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f0f5ff;
+        }
+        
+        .status-text {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        /* Câmera */
+        .camera-container {
             position: relative;
             width: 100%;
-            height: 400px;
+            height: 60vh;
+            max-height: 400px;
             background: #000;
-            border-radius: 15px;
+            border-radius: 20px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
         
-        #video {
+        #videoElement {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transform: scaleX(-1); /* Espelhar para ficar natural */
         }
         
-        .video-overlay {
+        .camera-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background: rgba(0,0,0,0.7);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.7);
             color: white;
-            font-size: 1.2rem;
+            text-align: center;
+            padding: 20px;
+            z-index: 10;
         }
         
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
+        .camera-overlay i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--success);
         }
         
-        .btn {
-            padding: 14px 28px;
+        .scan-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 120px;
+            border: 2px dashed var(--success);
+            border-radius: 10px;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        /* Controles de câmera */
+        .camera-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .control-btn {
+            padding: 16px;
             border: none;
-            border-radius: 50px;
+            border-radius: 12px;
             font-size: 1rem;
             font-weight: 600;
-            cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
+            cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .control-btn:active {
+            transform: scale(0.98);
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
         }
         
         .btn-secondary {
-            background: #e2e8f0;
-            color: #475569;
+            background: #e9ecef;
+            color: var(--dark);
         }
         
         .btn-danger {
-            background: #ef4444;
+            background: linear-gradient(135deg, #f72585, #b5179e);
             color: white;
         }
         
         .btn-success {
-            background: #10b981;
+            background: linear-gradient(135deg, #4cc9f0, #4895ef);
             color: white;
         }
         
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 14px rgba(0,0,0,0.1);
+        .btn-warning {
+            background: linear-gradient(135deg, #f8961e, #f3722c);
+            color: white;
         }
         
-        .btn:active {
-            transform: translateY(-1px);
+        /* Lista de textos */
+        .texts-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-height: 40vh;
+            overflow-y: auto;
         }
         
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .text-header {
+        .texts-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
         }
         
-        .text-header h2 {
-            font-size: 1.8rem;
-            color: #1e293b;
+        .texts-header h3 {
+            font-size: 1.3rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .counter {
-            background: #4f46e5;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--gray);
         }
         
-        #textList {
-            min-height: 300px;
-            max-height: 500px;
-            overflow-y: auto;
-            padding: 10px;
-            background: white;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
         
         .text-item {
-            padding: 15px;
-            margin-bottom: 10px;
             background: white;
-            border-radius: 10px;
-            border-left: 5px solid #4f46e5;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-            animation: fadeIn 0.5s ease;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+            animation: slideIn 0.3s ease;
         }
         
         .text-item:last-child {
             margin-bottom: 0;
         }
         
-        .text-item-header {
+        .text-meta {
             display: flex;
             justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--gray);
             margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: #64748b;
         }
         
-        .text-item-content {
-            font-size: 1.1rem;
+        .text-content {
+            font-size: 1.05rem;
             line-height: 1.5;
-            color: #1e293b;
+            color: var(--dark);
+            word-break: break-word;
         }
         
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: #64748b;
+        /* Botões flutuantes */
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
         }
         
-        .empty-state i {
-            font-size: 3rem;
+        .floating-btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .floating-btn:active {
+            transform: translateY(2px);
+        }
+        
+        /* Configurações */
+        .settings-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 15px;
-            opacity: 0.5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         
-        .instructions {
-            background: #f0f9ff;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-            border-left: 5px solid #0ea5e9;
+        .settings-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .instructions h3 {
-            margin-bottom: 10px;
-            color: #0369a1;
+        .setting-item {
+            margin-bottom: 15px;
         }
         
-        .instructions ol {
-            padding-left: 20px;
-            color: #475569;
-        }
-        
-        .instructions li {
+        .setting-label {
+            display: block;
             margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
         }
         
-        footer {
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .slider-value {
+            min-width: 40px;
             text-align: center;
-            padding: 20px;
-            color: #64748b;
-            font-size: 0.9rem;
-            border-top: 1px solid #e2e8f0;
-            margin-top: 30px;
+            font-weight: 600;
+            color: var(--primary);
         }
         
-        .status {
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #e9ecef;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: var(--primary);
+        }
+        
+        /* Animações */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+        
+        /* Scrollbar mobile */
+        .texts-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .texts-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .texts-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        /* Modo paisagem */
+        @media (orientation: landscape) {
+            .camera-container {
+                height: 45vh;
+            }
+            
+            .texts-container {
+                max-height: 30vh;
+            }
+        }
+        
+        /* Telas maiores */
+        @media (min-width: 768px) {
+            .main-container {
+                max-width: 500px;
+                margin: 70px auto 0;
+            }
+        }
+        
+        /* Feedback de reconhecimento */
+        .recognition-feedback {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
             padding: 10px 15px;
             border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .status-active {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .status-inactive {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Scrollbar personalizada */
-        #textList::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        #textList::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        #textList::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-        
-        #textList::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 20;
         }
         
         /* Loader */
@@ -310,7 +474,7 @@
             width: 20px;
             height: 20px;
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #4f46e5;
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -319,92 +483,164 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1001;
+            display: none;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-camera"></i> Scanner de Texto por Câmera</h1>
-            <p class="subtitle">Aponte para qualquer texto e ele será capturado automaticamente</p>
-        </header>
-        
-        <div class="main-content">
-            <div class="camera-section">
-                <div class="status status-inactive" id="status">
-                    <i class="fas fa-video-slash"></i> Câmera desativada
-                </div>
-                
-                <div class="video-container">
-                    <video id="video" autoplay playsinline></video>
-                    <div class="video-overlay" id="overlay">
-                        <div style="text-align: center;">
-                            <i class="fas fa-camera" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                            <p>Clique em "Ativar Câmera" para começar</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="controls">
-                    <button class="btn btn-primary" id="startBtn">
-                        <i class="fas fa-video"></i> Ativar Câmera
-                    </button>
-                    <button class="btn btn-secondary" id="pauseBtn" disabled>
-                        <i class="fas fa-pause"></i> Pausar
-                    </button>
-                    <button class="btn btn-danger" id="clearBtn">
-                        <i class="fas fa-trash"></i> Limpar Lista
-                    </button>
-                    <button class="btn btn-success" id="exportBtn">
-                        <i class="fas fa-download"></i> Exportar
-                    </button>
-                </div>
-                
-                <div class="instructions">
-                    <h3><i class="fas fa-info-circle"></i> Como usar:</h3>
-                    <ol>
-                        <li>Clique em "Ativar Câmera" e permita o acesso à câmera</li>
-                        <li>Aponte a câmera para qualquer texto (livro, tela, etc.)</li>
-                        <li>O texto será detectado automaticamente e adicionado à lista</li>
-                        <li>Use "Pausar" para parar a detecção temporariamente</li>
-                        <li>Clique em "Exportar" para baixar todos os textos</li>
-                    </ol>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="app-title">
+                <i class="fas fa-camera"></i>
+                <span>Text Scanner</span>
+            </div>
+            <div class="counter-badge" id="counter">0</div>
+        </div>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <div class="main-container">
+        <!-- Status -->
+        <div class="status-card" id="statusCard">
+            <div class="status-icon">
+                <i class="fas fa-video-slash" id="statusIcon"></i>
+            </div>
+            <div class="status-text" id="statusText">
+                Toque em "Iniciar Câmera" para começar
+            </div>
+        </div>
+
+        <!-- Câmera -->
+        <div class="camera-container">
+            <video id="videoElement" autoplay playsinline></video>
+            <div class="scan-area"></div>
+            <div class="camera-overlay" id="cameraOverlay">
+                <i class="fas fa-camera"></i>
+                <p>Toque no botão abaixo para ativar a câmera</p>
+            </div>
+            <div class="recognition-feedback" id="feedback">
+                <i class="fas fa-check"></i> Texto detectado!
+            </div>
+        </div>
+
+        <!-- Controles da câmera -->
+        <div class="camera-controls">
+            <button class="control-btn btn-primary" id="startBtn">
+                <i class="fas fa-video"></i> Iniciar Câmera
+            </button>
+            <button class="control-btn btn-secondary" id="switchBtn" disabled>
+                <i class="fas fa-sync-alt"></i> Trocar Câmera
+            </button>
+        </div>
+
+        <!-- Configurações -->
+        <div class="settings-card">
+            <h3 class="settings-title">
+                <i class="fas fa-cogs"></i> Configurações
+            </h3>
+            
+            <div class="setting-item">
+                <label class="setting-label">Sensibilidade de detecção</label>
+                <div class="slider-container">
+                    <span class="slider-value" id="sensitivityValue">3s</span>
+                    <input type="range" id="sensitivitySlider" min="1" max="10" value="3">
                 </div>
             </div>
             
-            <div class="text-section">
-                <div class="text-header">
-                    <h2><i class="fas fa-list"></i> Textos Detectados</h2>
-                    <div class="counter" id="counter">0 itens</div>
+            <div class="setting-item">
+                <label class="setting-label">Filtro de qualidade</label>
+                <div class="slider-container">
+                    <span class="slider-value" id="qualityValue">70%</span>
+                    <input type="range" id="qualitySlider" min="10" max="100" value="70">
                 </div>
-                
-                <div id="textList">
-                    <div class="empty-state">
-                        <i class="fas fa-font"></i>
-                        <h3>Nenhum texto detectado ainda</h3>
-                        <p>Ative a câmera e aponte para algum texto</p>
-                    </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="autoDetect" checked>
+                    <label>Detecção automática</label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="vibrate" checked>
+                    <label>Vibrar ao detectar</label>
                 </div>
             </div>
         </div>
-        
-        <footer>
-            <p>Feito com <i class="fas fa-heart" style="color: #ef4444;"></i> | Funciona 100% no navegador - nenhum dado é enviado para servidores</p>
-            <p style="margin-top: 5px; font-size: 0.8rem;">Compatível com Samsung Galaxy e outros dispositivos</p>
-        </footer>
+
+        <!-- Lista de textos -->
+        <div class="texts-container">
+            <div class="texts-header">
+                <h3><i class="fas fa-list"></i> Textos Detectados</h3>
+                <button class="control-btn btn-danger" id="clearBtn" style="padding: 8px 12px;">
+                    <i class="fas fa-trash"></i> Limpar
+                </button>
+            </div>
+            
+            <div id="textsList">
+                <div class="empty-state">
+                    <i class="fas fa-font"></i>
+                    <p>Aponte a câmera para algum texto</p>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Botões flutuantes -->
+    <div class="floating-buttons">
+        <button class="floating-btn btn-warning" id="pauseBtn" disabled>
+            <i class="fas fa-pause"></i> Pausar
+        </button>
+        <button class="floating-btn btn-success" id="exportBtn">
+            <i class="fas fa-download"></i> Exportar
+        </button>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/tesseract.min.js"></script>
     <script>
-        // Elementos do DOM
-        const video = document.getElementById('video');
-        const overlay = document.getElementById('overlay');
+        // Elementos DOM
+        const video = document.getElementById('videoElement');
+        const overlay = document.getElementById('cameraOverlay');
+        const feedback = document.getElementById('feedback');
         const startBtn = document.getElementById('startBtn');
+        const switchBtn = document.getElementById('switchBtn');
         const pauseBtn = document.getElementById('pauseBtn');
-        const clearBtn = document.getElementById('clearBtn');
         const exportBtn = document.getElementById('exportBtn');
-        const textList = document.getElementById('textList');
+        const clearBtn = document.getElementById('clearBtn');
+        const textsList = document.getElementById('textsList');
         const counter = document.getElementById('counter');
-        const statusDiv = document.getElementById('status');
+        const statusCard = document.getElementById('statusCard');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const toast = document.getElementById('toast');
+        
+        // Configurações
+        const sensitivitySlider = document.getElementById('sensitivitySlider');
+        const sensitivityValue = document.getElementById('sensitivityValue');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const autoDetect = document.getElementById('autoDetect');
+        const vibrate = document.getElementById('vibrate');
         
         // Variáveis globais
         let stream = null;
@@ -413,57 +649,95 @@
         let detectedTexts = [];
         let scanInterval = null;
         let worker = null;
+        let currentCamera = 'environment'; // 'environment' = traseira, 'user' = frontal
         
-        // Inicializar Tesseract.js
+        // Inicializar Tesseract com configurações otimizadas
         async function initializeTesseract() {
             try {
-                console.log("Inicializando Tesseract...");
-                worker = await Tesseract.createWorker('por');
-                await worker.load();
-                await worker.loadLanguage('por');
-                await worker.initialize('por');
-                console.log("Tesseract inicializado com sucesso!");
+                console.log("🚀 Inicializando Tesseract com configurações otimizadas...");
+                
+                worker = await Tesseract.createWorker('por', 1, {
+                    logger: m => console.log("Tesseract:", m),
+                    errorHandler: err => console.error("Tesseract error:", err),
+                    // Configurações para melhor performance em mobile
+                    cachePath: './tesseract-cache',
+                    gpu: true,
+                });
+                
+                // Configurar parâmetros para melhor reconhecimento
+                await worker.setParameters({
+                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?@#$%&*()-_=+[]{};:<>|/\\ ',
+                    preserve_interword_spaces: '1',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0',
+                    tessjs_create_box: '0',
+                });
+                
+                console.log("✅ Tesseract inicializado!");
+                showToast("Reconhecedor de texto pronto!");
+                
             } catch (error) {
-                console.error("Erro ao inicializar Tesseract:", error);
-                alert("Não foi possível carregar o reconhecedor de texto. Tente recarregar a página.");
+                console.error("❌ Erro ao inicializar Tesseract:", error);
+                showToast("Erro ao carregar reconhecedor", true);
             }
         }
         
         // Iniciar câmera
         async function startCamera() {
             try {
+                // Parar câmera anterior se existir
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                
                 // Solicitar permissão da câmera
-                stream = await navigator.mediaDevices.getUserMedia({
+                const constraints = {
                     video: {
-                        facingMode: 'environment', // Usar câmera traseira
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        facingMode: currentCamera,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 }
                     },
                     audio: false
-                });
+                };
                 
-                // Conectar stream ao elemento de vídeo
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-                overlay.style.display = 'none';
                 
-                // Atualizar status
-                statusDiv.className = 'status status-active';
-                statusDiv.innerHTML = '<i class="fas fa-video"></i> Câmera ativa - Detectando texto...';
+                // Configurações otimizadas para vídeo
+                video.playsInline = true;
+                video.muted = true;
+                
+                // Esconder overlay quando o vídeo estiver pronto
+                video.onloadeddata = () => {
+                    overlay.style.display = 'none';
+                    updateStatus(true, "Câmera ativa - Aponte para o texto");
+                    
+                    // Iniciar detecção
+                    if (autoDetect.checked) {
+                        startTextDetection();
+                    }
+                };
                 
                 // Atualizar botões
-                startBtn.disabled = true;
-                pauseBtn.disabled = false;
                 startBtn.innerHTML = '<i class="fas fa-video"></i> Câmera Ativa';
-                
-                // Iniciar detecção
-                startTextDetection();
+                startBtn.disabled = true;
+                switchBtn.disabled = false;
+                pauseBtn.disabled = false;
                 
             } catch (error) {
-                console.error("Erro ao acessar câmera:", error);
-                alert("Não foi possível acessar a câmera. Verifique as permissões.");
+                console.error("❌ Erro na câmera:", error);
                 
-                statusDiv.className = 'status status-inactive';
-                statusDiv.innerHTML = '<i class="fas fa-video-slash"></i> Erro ao acessar câmera';
+                // Tentar câmera frontal se a traseira falhar
+                if (currentCamera === 'environment') {
+                    currentCamera = 'user';
+                    showToast("Tentando câmera frontal...");
+                    setTimeout(startCamera, 500);
+                } else {
+                    showToast("Não foi possível acessar a câmera", true);
+                    updateStatus(false, "Erro ao acessar câmera");
+                }
             }
         }
         
@@ -481,15 +755,13 @@
             
             overlay.style.display = 'flex';
             isScanning = false;
-            isPaused = false;
             
-            statusDiv.className = 'status status-inactive';
-            statusDiv.innerHTML = '<i class="fas fa-video-slash"></i> Câmera desativada';
+            updateStatus(false, "Câmera desativada");
             
+            startBtn.innerHTML = '<i class="fas fa-video"></i> Iniciar Câmera';
             startBtn.disabled = false;
+            switchBtn.disabled = true;
             pauseBtn.disabled = true;
-            startBtn.innerHTML = '<i class="fas fa-video"></i> Ativar Câmera';
-            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
         }
         
         // Iniciar detecção de texto
@@ -498,50 +770,120 @@
             
             isScanning = true;
             isPaused = false;
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
             
-            // Detectar texto a cada 3 segundos
+            // Calcular intervalo baseado na sensibilidade
+            const interval = sensitivitySlider.value * 1000;
+            
             scanInterval = setInterval(async () => {
-                if (isPaused || !worker) return;
+                if (isPaused || !worker || !stream) return;
                 
                 try {
-                    // Capturar frame do vídeo
+                    // Mostrar feedback de processamento
+                    statusText.innerHTML = "Processando imagem...";
+                    
+                    // Capturar frame com qualidade configurada
                     const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
                     
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    // Ajustar tamanho baseado na qualidade
+                    const quality = qualitySlider.value / 100;
+                    canvas.width = video.videoWidth * quality;
+                    canvas.height = video.videoHeight * quality;
                     
+                    // Desenhar e processar imagem
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     
-                    // Processar imagem com Tesseract
-                    const { data: { text } } = await worker.recognize(canvas);
+                    // Aplicar pré-processamento para melhor reconhecimento
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    enhanceImage(imageData);
+                    ctx.putImageData(imageData, 0, 0);
                     
-                    // Verificar se há texto
-                    const cleanText = text.trim();
-                    if (cleanText && cleanText.length > 3) {
-                        // Verificar se é texto duplicado (similar)
-                        if (!isDuplicateText(cleanText)) {
-                            addDetectedText(cleanText);
+                    // Reconhecer texto
+                    const { data: { text, confidence } } = await worker.recognize(canvas);
+                    
+                    // Verificar qualidade do reconhecimento
+                    if (text && text.trim().length > 2 && confidence > 60) {
+                        const cleanText = text.trim();
+                        
+                        // Verificar se é texto válido e não duplicado
+                        if (isValidText(cleanText) && !isDuplicateText(cleanText)) {
+                            addDetectedText(cleanText, confidence);
+                            
+                            // Feedback visual
+                            showFeedback();
+                            if (vibrate.checked && navigator.vibrate) {
+                                navigator.vibrate(50);
+                            }
                         }
                     }
                     
+                    // Restaurar status
+                    updateStatus(true, "Câmera ativa - Aponte para o texto");
+                    
                 } catch (error) {
                     console.error("Erro na detecção:", error);
+                    updateStatus(true, "Câmera ativa - Erro na detecção");
                 }
-            }, 3000); // Verificar a cada 3 segundos
+            }, interval);
         }
         
-        // Verificar se o texto é duplicado
-        function isDuplicateText(newText) {
-            // Converter para minúsculas e remover espaços extras
-            const normalizedNew = newText.toLowerCase().replace(/\s+/g, ' ').trim();
+        // Melhorar imagem para reconhecimento
+        function enhanceImage(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
             
-            // Verificar similaridade com textos existentes
-            for (const item of detectedTexts) {
-                const normalizedExisting = item.text.toLowerCase().replace(/\s+/g, ' ').trim();
+            // Aumentar contraste
+            const contrast = 1.3;
+            const brightness = 10;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                // Aplicar contraste
+                data[i] = contrast * (data[i] - 128) + 128 + brightness;
+                data[i + 1] = contrast * (data[i + 1] - 128) + 128 + brightness;
+                data[i + 2] = contrast * (data[i + 2] - 128) + 128 + brightness;
                 
-                // Se for muito similar (90% igual), considerar duplicado
-                if (calculateSimilarity(normalizedNew, normalizedExisting) > 0.9) {
+                // Garantir que os valores estejam entre 0-255
+                data[i] = Math.min(255, Math.max(0, data[i]));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1]));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2]));
+            }
+        }
+        
+        // Verificar se o texto é válido
+        function isValidText(text) {
+            // Mínimo de caracteres
+            if (text.length < 3) return false;
+            
+            // Deve conter pelo menos uma letra
+            if (!/[a-zA-Z]/.test(text)) return false;
+            
+            // Não deve ser apenas números
+            if (/^\d+$/.test(text)) return false;
+            
+            // Não deve conter muitas sequências repetidas
+            const repeatedChars = (text.match(/(.)\1{3,}/g) || []).length;
+            if (repeatedChars > 0) return false;
+            
+            return true;
+        }
+        
+        // Verificar duplicatas
+        function isDuplicateText(newText) {
+            const normalizedNew = newText.toLowerCase()
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 100); // Comparar apenas os primeiros 100 chars
+            
+            for (const item of detectedTexts) {
+                const normalizedExisting = item.text.toLowerCase()
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .slice(0, 100);
+                
+                // Calcular similaridade
+                if (calculateSimilarity(normalizedNew, normalizedExisting) > 0.8) {
                     return true;
                 }
             }
@@ -549,171 +891,213 @@
             return false;
         }
         
-        // Calcular similaridade entre strings
-        function calculateSimilarity(str1, str2) {
-            const longer = str1.length > str2.length ? str1 : str2;
-            const shorter = str1.length > str2.length ? str2 : str1;
+        // Adicionar texto à lista
+        function addDetectedText(text, confidence) {
+            const now = new Date();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const date = now.toLocaleDateString();
             
-            // Se uma string for muito maior que a outra
-            if (longer.length === 0) return 1.0;
-            
-            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
-        }
-        
-        // Distância de edição (Levenshtein)
-        function editDistance(s1, s2) {
-            s1 = s1.toLowerCase();
-            s2 = s2.toLowerCase();
-            
-            const costs = [];
-            for (let i = 0; i <= s1.length; i++) {
-                let lastValue = i;
-                for (let j = 0; j <= s2.length; j++) {
-                    if (i === 0) {
-                        costs[j] = j;
-                    } else if (j > 0) {
-                        let newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        }
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
-                    }
-                }
-                if (i > 0) costs[s2.length] = lastValue;
-            }
-            return costs[s2.length];
-        }
-        
-        // Adicionar texto detectado à lista
-        function addDetectedText(text) {
-            const timestamp = new Date().toLocaleTimeString();
-            const date = new Date().toLocaleDateString();
-            
-            // Adicionar ao array
             detectedTexts.unshift({
                 text: text,
-                timestamp: timestamp,
+                time: time,
                 date: date,
+                confidence: Math.round(confidence),
                 id: Date.now()
             });
             
-            // Atualizar a interface
-            updateTextList();
-            updateCounter();
+            // Manter apenas os últimos 50 textos
+            if (detectedTexts.length > 50) {
+                detectedTexts.pop();
+            }
             
-            // Feedback visual
-            startBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-            setTimeout(() => {
-                startBtn.style.background = 'linear-gradient(135deg, #4f46e5, #7c3aed)';
-            }, 300);
+            updateTextsList();
+            updateCounter();
         }
         
-        // Atualizar lista de textos na interface
-        function updateTextList() {
+        // Atualizar lista de textos
+        function updateTextsList() {
             if (detectedTexts.length === 0) {
-                textList.innerHTML = `
+                textsList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-font"></i>
-                        <h3>Nenhum texto detectado ainda</h3>
-                        <p>Ative a câmera e aponte para algum texto</p>
+                        <p>Aponte a câmera para algum texto</p>
                     </div>
                 `;
                 return;
             }
             
             let html = '';
-            detectedTexts.forEach(item => {
+            detectedTexts.forEach((item, index) => {
                 html += `
                     <div class="text-item">
-                        <div class="text-item-header">
-                            <span><i class="far fa-clock"></i> ${item.timestamp}</span>
-                            <span><i class="far fa-calendar"></i> ${item.date}</span>
+                        <div class="text-meta">
+                            <span><i class="far fa-clock"></i> ${item.time}</span>
+                            <span>${item.confidence}% de confiança</span>
                         </div>
-                        <div class="text-item-content">${item.text}</div>
+                        <div class="text-content">${item.text}</div>
                     </div>
                 `;
             });
             
-            textList.innerHTML = html;
+            textsList.innerHTML = html;
         }
         
         // Atualizar contador
         function updateCounter() {
-            counter.textContent = `${detectedTexts.length} ${detectedTexts.length === 1 ? 'item' : 'itens'}`;
+            counter.textContent = detectedTexts.length;
+            counter.classList.add('pulse');
+            setTimeout(() => counter.classList.remove('pulse'), 300);
         }
         
-        // Limpar lista
-        function clearList() {
-            if (detectedTexts.length === 0) return;
+        // Atualizar status
+        function updateStatus(isActive, message) {
+            statusCard.className = isActive ? 'status-card active' : 'status-card';
+            statusIcon.className = isActive ? 'fas fa-video' : 'fas fa-video-slash';
+            statusText.textContent = message;
+        }
+        
+        // Mostrar feedback visual
+        function showFeedback() {
+            feedback.style.display = 'block';
+            setTimeout(() => {
+                feedback.style.display = 'none';
+            }, 1500);
+        }
+        
+        // Mostrar toast
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.style.background = isError ? 'linear-gradient(135deg, #f72585, #b5179e)' : 'var(--dark)';
+            toast.style.display = 'block';
             
-            if (confirm(`Tem certeza que deseja limpar todos os ${detectedTexts.length} textos?`)) {
-                detectedTexts = [];
-                updateTextList();
-                updateCounter();
-            }
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
         }
         
         // Exportar textos
         function exportTexts() {
             if (detectedTexts.length === 0) {
-                alert('Nenhum texto para exportar!');
+                showToast("Nenhum texto para exportar!", true);
                 return;
             }
             
-            let exportContent = 'TEXTOS DETECTADOS - SCANNER DE CÂMERA\n';
-            exportContent += '='.repeat(50) + '\n\n';
+            let content = `TEXTOS DETECTADOS - SCANNER\n`;
+            content += `Gerado em: ${new Date().toLocaleString()}\n`;
+            content += `Total: ${detectedTexts.length} textos\n`;
+            content += '='.repeat(50) + '\n\n';
             
             detectedTexts.forEach((item, index) => {
-                exportContent += `TEXTO ${index + 1}\n`;
-                exportContent += `Data: ${item.date} | Hora: ${item.timestamp}\n`;
-                exportContent += '-'.repeat(30) + '\n';
-                exportContent += item.text + '\n\n';
+                content += `[${index + 1}] ${item.time} (${item.confidence}%)\n`;
+                content += `${item.text}\n`;
+                content += '-'.repeat(30) + '\n';
             });
             
-            // Criar arquivo para download
-            const blob = new Blob([exportContent], { type: 'text/plain' });
+            // Criar e fazer download
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `textos-detectados-${new Date().toISOString().slice(0,10)}.txt`;
+            a.download = `textos-${new Date().toISOString().slice(0,10)}.txt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            showToast(`${detectedTexts.length} textos exportados!`);
+        }
+        
+        // Funções auxiliares (calculateSimilarity)
+        function calculateSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            // Usar uma comparação mais simples para performance
+            const matches = shorter.split('').filter((char, i) => 
+                i < longer.length && char === longer[i]
+            ).length;
+            
+            return matches / longer.length;
         }
         
         // Event Listeners
-        startBtn.addEventListener('click', startCamera);
+        startBtn.addEventListener('click', () => {
+            if (!stream) {
+                startCamera();
+            } else {
+                stopCamera();
+            }
+        });
+        
+        switchBtn.addEventListener('click', () => {
+            currentCamera = currentCamera === 'environment' ? 'user' : 'environment';
+            showToast(`Mudando para câmera ${currentCamera === 'environment' ? 'traseira' : 'frontal'}`);
+            startCamera();
+        });
         
         pauseBtn.addEventListener('click', () => {
-            isPaused = !isPaused;
+            if (!isScanning) return;
             
-            if (isPaused) {
-                pauseBtn.innerHTML = '<i class="fas fa-play"></i> Continuar';
-                statusDiv.innerHTML = '<i class="fas fa-pause"></i> Detecção pausada';
-            } else {
-                pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
-                statusDiv.innerHTML = '<i class="fas fa-video"></i> Câmera ativa - Detectando texto...';
+            isPaused = !isPaused;
+            pauseBtn.innerHTML = isPaused ? 
+                '<i class="fas fa-play"></i> Continuar' : 
+                '<i class="fas fa-pause"></i> Pausar';
+            
+            showToast(isPaused ? "Detecção pausada" : "Detecção ativada");
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            if (detectedTexts.length === 0) return;
+            
+            if (confirm(`Limpar todos os ${detectedTexts.length} textos?`)) {
+                detectedTexts = [];
+                updateTextsList();
+                updateCounter();
+                showToast("Lista limpa!");
             }
         });
         
-        clearBtn.addEventListener('click', clearList);
         exportBtn.addEventListener('click', exportTexts);
         
-        // Inicializar quando a página carregar
-        window.addEventListener('load', async () => {
-            console.log("Página carregada, inicializando...");
-            await initializeTesseract();
-            updateCounter();
+        // Atualizar valores dos sliders
+        sensitivitySlider.addEventListener('input', () => {
+            const value = sensitivitySlider.value;
+            sensitivityValue.textContent = `${value}s`;
+            
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                if (!isPaused && isScanning) {
+                    startTextDetection();
+                }
+            }
         });
         
-        // Parar câmera quando a página for fechada
-        window.addEventListener('beforeunload', () => {
-            if (worker) {
-                worker.terminate();
+        qualitySlider.addEventListener('input', () => {
+            const value = qualitySlider.value;
+            qualityValue.textContent = `${value}%`;
+        });
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("📱 Text Scanner iniciando...");
+            await initializeTesseract();
+            updateCounter();
+            
+            // Verificar suporte a vibração
+            if (!navigator.vibrate) {
+                vibrate.disabled = true;
+                vibrate.checked = false;
             }
-            stopCamera();
+            
+            showToast("Toque em 'Iniciar Câmera' para começar");
+        });
+        
+        // Limpar quando a página for fechada
+        window.addEventListener('beforeunload', () => {
+            if (worker) worker.terminate();
+            if (stream) stopCamera();
         });
     </script>
 </body>
